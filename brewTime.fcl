@@ -1,0 +1,66 @@
+FUNCTION_BLOCK brewer
+
+VAR_INPUT
+    grindsize : REAL;
+    watertemp : REAl;
+    stirring : REAL;
+END_VAR
+
+VAR_OUTPUT
+    brewtime : REAL;
+END_VAR
+
+FUZZIFY grindsize
+    TERM fine := (0,1) (10,0);
+    TERM medium := (9,0) (14,1) (17,1) (24,0);
+    TERM coarse := (20,0) (27,0.5) (40,1) (45,1);
+END_FUZZIFY
+
+FUZZIFY watertemp
+    TERM icy := (0,1) (20,0);
+    TERM room := (18,0) (22,1) (26,1) (30,0);
+    TERM hot := (78,0) (88,1) (95,0);
+    TERM boiling := (90,0) (99,1) (100,1);
+END_FUZZIFY
+
+FUZZIFY stirring
+    TERM no := (0,1) (1,0);
+    TERM little := (0.5,0) (3,1) (5,0);
+    TERM much := (4,0) (8,0.75) (15,1);
+END_FUZZIFY
+
+DEFUZZIFY brewtime
+    TERM extrashort := (15,0) (30,1) (60,0);
+    TERM short := (50,0) (60,1) (75,0);
+    TERM medium := (70,0) (90,1) (100,0);
+    TERM long := (90,0) (120,1) (150,0);
+    TERM extralong := (150,0) (28800,0.3) (43200,1) (54000,0.8) (100800,0);
+    METHOD : COG;
+    DEFAULT := 85;
+END_DEFUZZIFY
+
+RULEBLOCK one
+    AND : MIN;
+    ACT: MIN;
+
+    RULE 0: IF grindsize IS fine AND watertemp IS hot AND stirring IS NOT much THEN brewtime IS short;
+    RULE 1: IF grindsize IS fine AND watertemp IS hot AND stirring IS much THEN brewtime IS extrashort;
+    RULE 2: IF grindsize IS fine AND watertemp IS boiling THEN brewtime IS extrashort;
+    RULE 3: IF grindsize IS medium AND watertemp IS icy THEN brewtime IS extralong WITH 0.9;
+    RULE 4: IF grindsize IS medium AND watertemp IS room THEN brewtime IS extralong WITH 0.8;
+    RULE 5: IF grindsize IS medium AND watertemp IS hot AND stirring IS no THEN brewtime IS long;
+    RULE 6: IF grindsize IS medium AND watertemp IS hot AND stirring IS little THEN brewtime IS long;
+    RULE 7: IF grindsize IS medium AND watertemp IS hot AND stirring IS much THEN brewtime IS short;
+    RULE 8: IF grindsize IS medium AND watertemp IS boiling AND stirring IS no THEN brewtime IS long;
+    RULE 9: IF grindsize IS medium AND watertemp IS boiling AND stirring IS little THEN brewtime IS short;
+    RULE 10: IF grindsize IS medium AND watertemp IS boiling AND sitrring IS much THEN brewtime IS extrashort;
+    RULE 11: IF grindsize IS coarse AND watertemp IS icy THEN brewtime IS extralong;
+    RULE 12: IF grindsize IS coarse AND watertemp IS room THEN brewtime IS extralong;
+    RULE 13: IF grindsize IS coarse AND watertemp IS hot AND stirring IS no THEN brewtime IS long;
+    RULE 14: IF grindsize IS coarse AND watertemp IS hot AND stirring IS NOT no THEN brewtime IS medium;
+    RULE 15: IF grindsize IS coarse AND watertemp IS boiling AND stirring IS no THEN brewtime IS long;
+    RULE 16: IF grindsize IS coarse AND watertemp IS boiling AND stirring IS little THEN brewtime IS medium;
+    RULE 17: IF grindsize IS coarse AND watertemp IS boiling AND stirring IS much THEN brewtime IS short;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
